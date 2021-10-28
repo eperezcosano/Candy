@@ -54,19 +54,20 @@ function drawSelection(i) {
   ctx.globalAlpha = 1
 }
 
-function checkRowOfThree () {
+function checkRow() {
   for (let i = 0; i < width ** 2; i++) {
 
-    if (i % width > width - 3) {
-      console.log(i)
-      continue
-    }
+    if (i % width > width - 3) continue
 
     const row = [i, i + 1, i + 2]
     const decidedColor = tiles[i]
     const isBlank = tiles[i] === null
+    const isRowFour = i % width < width - 3
 
     if (row.every(candy => tiles[candy] === decidedColor && !isBlank)) {
+      if (isRowFour && tiles[i + 3] === decidedColor && !isBlank) {
+        row.push(i + 3)
+      }
       row.forEach(candy => tiles[candy] = null)
       return true
     }
@@ -74,13 +75,17 @@ function checkRowOfThree () {
   return false
 }
 
-function checkColumnOfThree() {
+function checkColumn() {
   for (let i = 0; i < (width * (width - 2)); i++) {
     const column = [i, i + width, i + width * 2]
     const decidedColor = tiles[i]
     const isBlank = decidedColor === null
+    const isColumnFour = i < (width * (width - 3))
 
     if (column.every(candy => tiles[candy] === decidedColor && !isBlank)) {
+      if (isColumnFour && tiles[i + width * 3] === decidedColor && !isBlank) {
+        column.push(i + width * 3)
+      }
       column.forEach(candy => tiles[candy] = null)
       return true
     }
@@ -120,7 +125,7 @@ async function moveDown() {
 
     }
     if (!isFalling) {
-      if (checkColumnOfThree() || checkRowOfThree()) isFalling = true
+      if (checkColumn() || checkRow()) isFalling = true
     }
   } while (isFalling)
 
@@ -148,10 +153,6 @@ async function mouseUp(e) {
     }
   }
 
-  swap(origin, destination)
-  drawBoard()
-  await sleep(100)
-
   const validMoves = [
     origin - 1,
     origin - width,
@@ -160,12 +161,17 @@ async function mouseUp(e) {
   ]
 
   const validMove = validMoves.includes(destination)
-  const isColumnOfThree = checkColumnOfThree()
-  const isRowOfThree = checkRowOfThree()
 
-  console.log(validMove, isColumnOfThree)
+  if (!validMove) return
 
-  if (validMove && (isColumnOfThree || isRowOfThree)) {
+  swap(origin, destination)
+  drawBoard()
+  await sleep(100)
+
+  const isColumnOfThree = checkColumn()
+  const isRowOfThree = checkRow()
+
+  if (isColumnOfThree || isRowOfThree) {
     moveDown()
   } else {
     swap(destination, origin)
@@ -225,4 +231,3 @@ async function init() {
 }
 
 init()
-console.log(tiles.map(item => item.src))
